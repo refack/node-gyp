@@ -370,7 +370,7 @@ cmd_touch = touch $@
 
 quiet_cmd_copy = COPY $@
 # send stderr to /dev/null to ignore messages when linking directories.
-cmd_copy = ln -f "$<" "$@" 2>/dev/null || (rm -rf "$@" && cp %(copy_archive_args)s "$<" "$@")
+cmd_copy = rm -rf "$@" && cp %(copy_archive_args)s "$<" "$@"
 
 %(link_commands)s
 """
@@ -1928,11 +1928,13 @@ $(obj).$(TOOLSET)/$(TARGET)/%%.o: $(obj)/%%%s FORCE_DO_CMD
     """Returns the location of the final output for an installable target."""
     # Xcode puts shared_library results into PRODUCT_DIR, and some gyp files
     # rely on this. Emulate this behavior for mac.
-    if (self.type == 'shared_library' and
-        (self.flavor != 'mac' or self.toolset != 'target')):
-      # Install all shared libs into a common directory (per toolset) for
-      # convenient access with LD_LIBRARY_PATH.
-      return '$(builddir)/lib.%s/%s' % (self.toolset, self.alias)
+
+    # XXX(TooTallNate): disabling this code since we don't want this behavior...
+    #if (self.type == 'shared_library' and
+    #    (self.flavor != 'mac' or self.toolset != 'target')):
+    #  # Install all shared libs into a common directory (per toolset) for
+    #  # convenient access with LD_LIBRARY_PATH.
+    #  return '$(builddir)/lib.%s/%s' % (self.toolset, self.alias)
     return '$(builddir)/' + self.alias
 
 
