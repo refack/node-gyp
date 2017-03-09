@@ -12,6 +12,13 @@ test('build simple addon', function (t) {
   // Set the loglevel otherwise the output disappears when run via 'npm test'
   var cmd = [nodeGyp, 'rebuild', '-C', addonPath, '--loglevel=verbose']
   var proc = execFile(process.execPath, cmd, function (err, stdout, stderr) {
+    if ((process.env['DEBUG'] || '').split(',').includes('node-gyp')) {
+      console.log('===================== stdout ========================')
+      console.log(stdout.toString())
+      console.log('===================== stderr ========================')
+      console.log(stderr.toString())
+      console.log('=====================================================')
+    }
     var logLines = stderr.toString().trim().split(/\r?\n/)
     var lastLine = logLines[logLines.length-1]
     t.strictEqual(err, null)

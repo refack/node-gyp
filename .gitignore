@@ -3,3 +3,4 @@ node_modules
 test/.node-gyp
 !test/node_modules
 build/
+/7*
