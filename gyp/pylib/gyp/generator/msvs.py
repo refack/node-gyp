@@ -294,35 +294,21 @@ def _ConfigFullName(config_name, config_data):
   return '%s|%s' % (_ConfigBaseName(config_name, platform_name), platform_name)
 
 
-def _ConfigWindowsTargetPlatformVersion(config_data):
-  ver = config_data.get('msvs_windows_sdk_version')
-
-  for key in [r'HKLM\Software\Microsoft\Microsoft SDKs\Windows\%s',
-              r'HKLM\Software\Wow6432Node\Microsoft\Microsoft SDKs\Windows\%s']:
-    sdk_dir = MSVSVersion._RegistryGetValue(key % ver, 'InstallationFolder')
-    if not sdk_dir:
-      continue
-    version = MSVSVersion._RegistryGetValue(key % ver, 'ProductVersion') or ''
-    # Find a matching entry in sdk_dir\include.
-    names = sorted([x for x in os.listdir(r'%s\include' % sdk_dir)
-                    if x.startswith(version)], reverse=True)
-    return names[0]
-
-
-def _ConfigWindowsTargetPlatformVersion(config_data):
-  ver = config_data.get('msvs_windows_target_platform_version')
-  if not ver or re.match(r'^\d+', ver):
-    return ver
-  for key in [r'HKLM\Software\Microsoft\Microsoft SDKs\Windows\%s',
-              r'HKLM\Software\Wow6432Node\Microsoft\Microsoft SDKs\Windows\%s']:
-    sdkdir = MSVSVersion._RegistryGetValue(key % ver, 'InstallationFolder')
-    if not sdkdir:
-      continue
-    version = MSVSVersion._RegistryGetValue(key % ver, 'ProductVersion') or ''
-    # find a matching entry in sdkdir\include
-    names = sorted([x for x in os.listdir(r'%s\include' % sdkdir) \
-                    if x.startswith(version)], reverse = True)
-    return names[0]
+def _ConfigWindowsTargetPlatformVersion(config_data, version):
+  config_ver = config_data.get('msvs_windows_sdk_version')
+  vers = [config_ver] if config_ver else version.compatible_sdks
+  for ver in vers:
+    for key in [
+      r'HKLM\Software\Microsoft\Microsoft SDKs\Windows\%s',
+      r'HKLM\Software\Wow6432Node\Microsoft\Microsoft SDKs\Windows\%s']:
+      sdk_dir = MSVSVersion._RegistryGetValue(key % ver, 'InstallationFolder')
+      if not sdk_dir:
+        continue
+      version = MSVSVersion._RegistryGetValue(key % ver, 'ProductVersion') or ''
+      # Find a matching entry in sdk_dir\include.
+      names = sorted([x for x in os.listdir(r'%s\include' % sdk_dir)
+                      if x.startswith(version)], reverse=True)
+      return names[0]
 
 
 def _BuildCommandLineForRuleRaw(spec, cmd, cygwin_shell, has_input_path,
@@ -378,8 +364,6 @@ def _BuildCommandLineForRuleRaw(spec, cmd, cygwin_shell, has_input_path,
       command = ['type']
     else:
       command = [cmd[0].replace('/', '\\')]
-    if quote_cmd:
-      command = ['"%s"' % i for i in command]
     # Add call before command to ensure that commands can be tied together one
     # after the other without aborting in Incredibuild, since IB makes a bat
     # file out of the raw command string, and some commands (like python) are
